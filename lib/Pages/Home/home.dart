@@ -1,21 +1,29 @@
+import 'package:app/API/api.dart';
 import 'package:app/Common/common.dart';
+import 'package:app/Common/mycolors.dart';
+import 'package:app/Common/widgets.dart';
+import 'package:app/Data/carrito.dart';
 import 'package:flutter/material.dart';
 
 class HomePage extends StatelessWidget {
-  const HomePage({super.key});
+  HomePage({super.key});
+  Carrito carrito = Carrito();
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.grey[300],
+      backgroundColor: MyColors.white(),
       body: SafeArea(
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            topContainer(),
+            topContainer(context),
             anuncio(),
             categorias(),
-            populares(context),
+            Expanded(
+                child: ListView(
+              children: [populares(context), limpieza(context)],
+            ))
           ],
         ),
       ),
@@ -30,22 +38,80 @@ class HomePage extends StatelessWidget {
          * Texto de populares
          */
         Padding(
-          padding: const EdgeInsets.only(left: 20, top: 20, bottom: 10),
+          padding: const EdgeInsets.only(left: 20, bottom: 10),
           child: textCategorias("Populares"),
         ),
-        SizedBox(
-          width: double.infinity,
-          height: 230,
-          child: ListView(
-            scrollDirection: Axis.horizontal,
-            children: [
-              itemProductos(context),
-              itemProductos(context),
-              itemProductos(context),
-              itemProductos(context),
-            ],
-          ),
-        )
+        FutureBuilder(
+          future: API.getItemPopular(),
+          builder: (context, snapshot) {
+            if (snapshot.hasData) {
+              return SizedBox(
+                width: double.infinity,
+                height: 230,
+                child: ListView.builder(
+                  itemCount: snapshot.data!.isEmpty ? 0 : snapshot.data!.length,
+                  scrollDirection: Axis.horizontal,
+                  itemBuilder: (context, index) {
+                    return itemProductos(
+                        context,
+                        snapshot.data![index]["nameItem"],
+                        snapshot.data![index]["imageItem"],
+                        snapshot.data![index]["priceItem"],
+                        snapshot.data![index]["uItem"]);
+                  },
+                ),
+              );
+            }
+            if (snapshot.hasError) {
+              return const Text("Error data");
+            } else {
+              return const CircularProgressIndicator();
+            }
+          },
+        ),
+      ],
+    );
+  }
+
+  Column limpieza(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        /**
+         * Texto de populares
+         */
+        Padding(
+          padding: const EdgeInsets.only(left: 20, bottom: 10),
+          child: textCategorias("Frutas"),
+        ),
+        FutureBuilder(
+          future: API.getItemforCategory("1"),
+          builder: (context, snapshot) {
+            if (snapshot.hasData) {
+              return SizedBox(
+                width: double.infinity,
+                height: 230,
+                child: ListView.builder(
+                  itemCount: snapshot.data!.isEmpty ? 0 : snapshot.data!.length,
+                  scrollDirection: Axis.horizontal,
+                  itemBuilder: (context, index) {
+                    return itemProductos(
+                        context,
+                        snapshot.data![index]["nameItem"],
+                        snapshot.data![index]["imageItem"],
+                        snapshot.data![index]["priceItem"],
+                        snapshot.data![index]["uItem"]);
+                  },
+                ),
+              );
+            }
+            if (snapshot.hasError) {
+              return const Text("Error data");
+            } else {
+              return const CircularProgressIndicator();
+            }
+          },
+        ),
       ],
     );
   }
@@ -57,7 +123,7 @@ class HomePage extends StatelessWidget {
     );
   }
 
-  itemProductos(BuildContext context) {
+  itemProductos(BuildContext context, String nombre, String image, double precio, bool uItem) {
     return InkWell(
       onTap: () {
         Navigator.pushNamed(context, "/Item");
@@ -75,7 +141,7 @@ class HomePage extends StatelessWidget {
                  * Imagen del producto
                  */
               Image.network(
-                "https://idard.org.do/wp-content/uploads/2018/03/naranja1.png",
+                image,
                 width: 160,
                 height: 140,
                 fit: BoxFit.contain,
@@ -84,9 +150,9 @@ class HomePage extends StatelessWidget {
               /**
                  * Texto del nombre del producto
                  */
-              const Text(
-                "Naranja fresca",
-                style: TextStyle(fontWeight: FontWeight.bold, fontSize: 19),
+              Text(
+                nombre,
+                style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 19),
               ),
               Common.space(10),
               Row(
@@ -96,15 +162,15 @@ class HomePage extends StatelessWidget {
                      * Contenedor de peso
                      */
                   Container(
-                    margin: EdgeInsets.only(right: 5),
+                    margin: const EdgeInsets.only(right: 5),
                     padding: const EdgeInsets.all(4),
                     width: 38,
                     height: 27,
                     decoration:
                         BoxDecoration(color: Colors.amber, borderRadius: BorderRadius.circular(10)),
-                    child: const Text(
-                      "1 kg",
-                      style: TextStyle(color: Colors.white, fontSize: 14),
+                    child: Text(
+                      uItem ? "1 Un" : "1 Kg",
+                      style: const TextStyle(color: Colors.white, fontSize: 14),
                     ),
                   ),
                   /**
@@ -118,9 +184,9 @@ class HomePage extends StatelessWidget {
                   /**
                      * Texto del precio
                      */
-                  const Text(
-                    "3.20",
-                    style: TextStyle(fontWeight: FontWeight.bold, fontSize: 19),
+                  Text(
+                    precio.toString(),
+                    style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 19),
                   ),
                 ],
               )
@@ -134,39 +200,56 @@ class HomePage extends StatelessWidget {
   Container anuncio() {
     return Container(
       width: double.infinity,
-      height: 100,
-      margin: const EdgeInsets.only(top: 10, bottom: 30, left: 20, right: 20),
-      decoration: BoxDecoration(color: Colors.amber, borderRadius: BorderRadius.circular(20)),
+      height: 140,
+      margin: const EdgeInsets.only(bottom: 10, left: 20, right: 20),
+      decoration: BoxDecoration(
+          color: Colors.lightBlue,
+          borderRadius: BorderRadius.circular(20),
+          image: const DecorationImage(fit: BoxFit.cover, image: AssetImage("assets/anuncio.jpg"))),
     );
   }
 
   categorias() {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        /**
-         * Texto Categorias
-         */
-        Padding(
-            padding: const EdgeInsets.only(left: 20, bottom: 10),
-            child: textCategorias("Categorias")),
-        /**
-         * Listado Categorias
-         */
-        SizedBox(
-          height: 40,
-          width: double.infinity,
-          child: ListView(scrollDirection: Axis.horizontal, children: [
-            itemCategoria("assets/categorias/frutas.png", "Frutas"),
-            itemCategoria("assets/categorias/frutas.png", "Frutas"),
-            itemCategoria("assets/categorias/frutas.png", "Frutas"),
-            itemCategoria("assets/categorias/frutas.png", "Frutas"),
-            itemCategoria("assets/categorias/frutas.png", "Frutas"),
-            itemCategoria("assets/categorias/frutas.png", "Frutas"),
-            itemCategoria("assets/categorias/frutas.png", "Frutas")
-          ]),
-        ),
-      ],
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 10),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          /**
+           * Texto Categorias
+           */
+          Padding(
+              padding: const EdgeInsets.only(left: 20, bottom: 10),
+              child: textCategorias("Categorias")),
+          /**
+           * Listado Categorias
+           */
+
+          FutureBuilder(
+            future: API.getCategory(),
+            builder: (context, snapshot) {
+              if (snapshot.hasData) {
+                return SizedBox(
+                    height: 40,
+                    width: double.infinity,
+                    child: ListView.builder(
+                      scrollDirection: Axis.horizontal,
+                      itemCount: snapshot.data!.isEmpty ? 0 : snapshot.data!.length,
+                      itemBuilder: (context, index) {
+                        return itemCategoria(snapshot.data![index]["imageCategory"],
+                            snapshot.data![index]["nameCategory"]);
+                      },
+                    ));
+              }
+              if (snapshot.hasError) {
+                return const Text("Error Data");
+              } else {
+                return const CircularProgressIndicator();
+              }
+            },
+          ),
+        ],
+      ),
     );
   }
 
@@ -174,12 +257,12 @@ class HomePage extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(10),
       margin: const EdgeInsets.only(left: 20),
-      width: 100,
+      width: 110,
       height: 40,
       decoration: BoxDecoration(borderRadius: BorderRadius.circular(10), color: Colors.white),
       child: Row(
         children: [
-          Image.asset(
+          Image.network(
             image,
             width: 30,
             height: 30,
@@ -190,19 +273,10 @@ class HomePage extends StatelessWidget {
     );
   }
 
-  topContainer() {
+  topContainer(BuildContext context) {
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
-      children: [
-        nombreUsuario(),
-        const Padding(
-          padding: EdgeInsets.all(20),
-          child: Icon(
-            Icons.exit_to_app,
-            size: 30,
-          ),
-        )
-      ],
+      children: [nombreUsuario(), MyWidgets.botonCarrito(context)],
     );
   }
 
@@ -211,7 +285,7 @@ class HomePage extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: const [
         Padding(
-          padding: EdgeInsets.only(top: 20, left: 20, bottom: 2),
+          padding: EdgeInsets.only(top: 40, left: 20, bottom: 2),
           child: Text(
             "Hey Sebastian!",
             style: TextStyle(fontSize: 30, fontWeight: FontWeight.bold),

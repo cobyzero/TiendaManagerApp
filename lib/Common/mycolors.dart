@@ -2,7 +2,11 @@ import 'package:flutter/material.dart';
 
 class MyColors {
   static white() {
-    return const Color(0xfffafafa);
+    return const Color(0xfff5f5fa);
+  }
+
+  static white2() {
+    return const Color(0xffe5e1e1);
   }
 
   static gradientMoradoRosado() {
