@@ -15,4 +15,8 @@ class MyColors {
         end: Alignment.topCenter,
         colors: [Color(0xff7028e4), Color(0xffe5b2ca)]);
   }
+
+  static black() {
+    return const Color(0xff1C1C1C);
+  }
 }

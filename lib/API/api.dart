@@ -46,4 +46,34 @@ class API {
 
     return json;
   }
+
+  static Future<int> getLoginId(String username, String password) async {
+    http.Response response;
+
+    var json = jsonEncode({"usernameUsers": username, "passwordUsers": password});
+
+    Uri uri = Uri.http(url, "/api/users/getLogin");
+    response = await http.post(uri, body: json);
+
+    if (response.statusCode == 404) {
+      return 0;
+    }
+    print(jsonDecode(response.body));
+    return jsonDecode(response.body);
+  }
+
+  static Future<String> getDataforId(int id, String data) async {
+    http.Response response;
+
+    Uri uri = Uri.http(url, "/api/users/getData/$id");
+    response = await http.get(uri);
+
+    if (response.statusCode == 404) {
+      return "";
+    }
+
+    var json = jsonDecode(response.body);
+
+    return json[data];
+  }
 }

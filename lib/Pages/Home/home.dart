@@ -11,18 +11,21 @@ class HomePage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    int id = ModalRoute.of(context)!.settings.arguments as int;
+
     return Scaffold(
-      backgroundColor: MyColors.white(),
+      backgroundColor: MyColors.black(),
       body: SafeArea(
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            topContainer(context),
+            topContainer(context, id),
             anuncio(),
+            Common.space(20),
             categorias(),
             Expanded(
                 child: ListView(
-              children: [populares(context), limpieza(context)],
+              children: [populares(context), Common.space(20), limpieza(context)],
             ))
           ],
         ),
@@ -119,7 +122,7 @@ class HomePage extends StatelessWidget {
   Text textCategorias(String texto) {
     return Text(
       texto,
-      style: const TextStyle(fontSize: 21, fontWeight: FontWeight.bold),
+      style: const TextStyle(fontSize: 21, fontWeight: FontWeight.bold, color: Colors.white),
     );
   }
 
@@ -200,10 +203,9 @@ class HomePage extends StatelessWidget {
   Container anuncio() {
     return Container(
       width: double.infinity,
-      height: 140,
+      height: 160,
       margin: const EdgeInsets.only(bottom: 10, left: 20, right: 20),
       decoration: BoxDecoration(
-          color: Colors.lightBlue,
           borderRadius: BorderRadius.circular(20),
           image: const DecorationImage(fit: BoxFit.cover, image: AssetImage("assets/anuncio.jpg"))),
     );
@@ -248,6 +250,7 @@ class HomePage extends StatelessWidget {
               }
             },
           ),
+          Common.space(20)
         ],
       ),
     );
@@ -273,25 +276,37 @@ class HomePage extends StatelessWidget {
     );
   }
 
-  topContainer(BuildContext context) {
+  topContainer(BuildContext context, int id) {
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
-      children: [nombreUsuario(), MyWidgets.botonCarrito(context)],
+      children: [nombreUsuario(id), MyWidgets.botonCarrito(context)],
     );
   }
 
-  Column nombreUsuario() {
+  Column nombreUsuario(int id) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
-      children: const [
-        Padding(
-          padding: EdgeInsets.only(top: 40, left: 20, bottom: 2),
-          child: Text(
-            "Hey Sebastian!",
-            style: TextStyle(fontSize: 30, fontWeight: FontWeight.bold),
-          ),
+      children: [
+        FutureBuilder(
+          future: API.getDataforId(id, "nameUsers"),
+          builder: (context, snapshot) {
+            if (snapshot.hasData) {
+              return Padding(
+                padding: const EdgeInsets.only(top: 40, left: 20, bottom: 2),
+                child: Text(
+                  "Hey ${snapshot.data}!",
+                  style: const TextStyle(
+                      fontSize: 30, fontWeight: FontWeight.bold, color: Colors.white),
+                ),
+              );
+            } else if (snapshot.hasError) {
+              return const Text("Error Data");
+            } else {
+              return const CircularProgressIndicator();
+            }
+          },
         ),
-        Padding(
+        const Padding(
           padding: EdgeInsets.only(left: 20, bottom: 20),
           child: Text(
             "Que te gustaria comer hoy?",
