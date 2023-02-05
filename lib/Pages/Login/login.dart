@@ -28,7 +28,9 @@ class _LoginPageState extends State<LoginPage> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                   children: [
-                    MyWidgets.botonRetroceder(context, left: 0),
+                    MyWidgets.botonRetroceder(context, () {
+                      Navigator.pop(context);
+                    }, left: 0),
                     textosTop(),
                     formCentral(),
                     botonLogin(context)

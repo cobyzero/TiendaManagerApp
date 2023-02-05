@@ -76,4 +76,36 @@ class API {
 
     return json[data];
   }
+
+  static Future<String> getCategoryForId(int id, String data) async {
+    http.Response response;
+
+    Uri uri = Uri.http(url, "/api/getCategoryForId");
+
+    response = await http.post(uri, body: jsonEncode({"id": id}));
+
+    if (response.statusCode == 404) {
+      return "";
+    }
+
+    var json = jsonDecode(response.body);
+
+    return json[data];
+  }
+
+  static Future<Map> getItemForId(int id) async {
+    http.Response response;
+
+    Uri uri = Uri.http(url, "/api/getItemForId");
+
+    response = await http.post(uri, body: jsonEncode({"id": id}));
+
+    if (response.statusCode == 404) {
+      return {};
+    }
+
+    var json = jsonDecode(response.body);
+
+    return json;
+  }
 }

@@ -3,18 +3,27 @@ import 'package:app/Common/common.dart';
 import 'package:app/Common/mycolors.dart';
 import 'package:app/Common/widgets.dart';
 import 'package:app/Data/carrito.dart';
+import 'package:app/Model/itemModel.dart';
 import 'package:flutter/material.dart';
 
-class HomePage extends StatelessWidget {
-  HomePage({super.key});
+class HomePage extends StatefulWidget {
+  const HomePage({super.key});
+
+  @override
+  State<HomePage> createState() => _HomePageState();
+}
+
+class _HomePageState extends State<HomePage> {
   Carrito carrito = Carrito();
+  int numCategory = 1;
+  int precionado = 0;
 
   @override
   Widget build(BuildContext context) {
     int id = ModalRoute.of(context)!.settings.arguments as int;
 
     return Scaffold(
-      backgroundColor: MyColors.black(),
+      backgroundColor: MyColors.gray900(),
       body: SafeArea(
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -25,11 +34,33 @@ class HomePage extends StatelessWidget {
             categorias(),
             Expanded(
                 child: ListView(
-              children: [populares(context), Common.space(20), limpieza(context)],
+              children: [
+                if (numCategory == 0) populares(context),
+                if (numCategory == 0) Common.space(20),
+                if (numCategory == 0) listCategoriaBase(context, "Frutas", 1),
+                if (numCategory == 0) Common.space(20),
+                if (numCategory == 0) listCategoriaBase(context, "Verduras", 2),
+                if (numCategory != 0) itemSelectforCategory(context, numCategory),
+              ],
             ))
           ],
         ),
       ),
+    );
+  }
+
+  itemSelectforCategory(BuildContext context, int id) {
+    return FutureBuilder(
+      future: API.getCategoryForId(id, "nameCategory"),
+      builder: (context, snapshot) {
+        if (snapshot.hasData) {
+          return listCategoriaBase(context, snapshot.data!, id);
+        } else if (snapshot.hasError) {
+          return Text("Error Data");
+        } else {
+          return CircularProgressIndicator();
+        }
+      },
     );
   }
 
@@ -55,12 +86,18 @@ class HomePage extends StatelessWidget {
                   itemCount: snapshot.data!.isEmpty ? 0 : snapshot.data!.length,
                   scrollDirection: Axis.horizontal,
                   itemBuilder: (context, index) {
-                    return itemProductos(
-                        context,
+                    var itemModel = ItemModel(
+                        snapshot.data![index]["id"],
                         snapshot.data![index]["nameItem"],
-                        snapshot.data![index]["imageItem"],
+                        snapshot.data![index]["descriptionItem"],
                         snapshot.data![index]["priceItem"],
-                        snapshot.data![index]["uItem"]);
+                        snapshot.data![index]["imageItem"],
+                        snapshot.data![index]["amountItem"],
+                        snapshot.data![index]["uItem"],
+                        snapshot.data![index]["numOrderItem"],
+                        snapshot.data![index]["categoryId"]);
+
+                    return itemProductos(context, itemModel);
                   },
                 ),
               );
@@ -76,7 +113,7 @@ class HomePage extends StatelessWidget {
     );
   }
 
-  Column limpieza(BuildContext context) {
+  Column listCategoriaBase(BuildContext context, String texto, int categoria) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -85,10 +122,10 @@ class HomePage extends StatelessWidget {
          */
         Padding(
           padding: const EdgeInsets.only(left: 20, bottom: 10),
-          child: textCategorias("Frutas"),
+          child: textCategorias(texto),
         ),
         FutureBuilder(
-          future: API.getItemforCategory("1"),
+          future: API.getItemforCategory(categoria.toString()),
           builder: (context, snapshot) {
             if (snapshot.hasData) {
               return SizedBox(
@@ -98,12 +135,17 @@ class HomePage extends StatelessWidget {
                   itemCount: snapshot.data!.isEmpty ? 0 : snapshot.data!.length,
                   scrollDirection: Axis.horizontal,
                   itemBuilder: (context, index) {
-                    return itemProductos(
-                        context,
+                    var itemModel = ItemModel(
+                        snapshot.data![index]["id"],
                         snapshot.data![index]["nameItem"],
-                        snapshot.data![index]["imageItem"],
+                        snapshot.data![index]["descriptionItem"],
                         snapshot.data![index]["priceItem"],
-                        snapshot.data![index]["uItem"]);
+                        snapshot.data![index]["imageItem"],
+                        snapshot.data![index]["amountItem"],
+                        snapshot.data![index]["uItem"],
+                        snapshot.data![index]["numOrderItem"],
+                        snapshot.data![index]["categoryId"]);
+                    return itemProductos(context, itemModel);
                   },
                 ),
               );
@@ -122,14 +164,14 @@ class HomePage extends StatelessWidget {
   Text textCategorias(String texto) {
     return Text(
       texto,
-      style: const TextStyle(fontSize: 21, fontWeight: FontWeight.bold, color: Colors.white),
+      style: TextStyle(fontSize: 21, fontWeight: FontWeight.bold, color: MyColors.gray50()),
     );
   }
 
-  itemProductos(BuildContext context, String nombre, String image, double precio, bool uItem) {
+  itemProductos(BuildContext context, ItemModel itemModel) {
     return InkWell(
       onTap: () {
-        Navigator.pushNamed(context, "/Item");
+        Navigator.pushNamed(context, '/Item', arguments: itemModel.id).then((_) => setState(() {}));
       },
       child: Padding(
         padding: const EdgeInsets.only(left: 20),
@@ -137,15 +179,16 @@ class HomePage extends StatelessWidget {
           width: 180,
           height: 230,
           padding: const EdgeInsets.all(8),
-          decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(10)),
+          decoration:
+              BoxDecoration(color: MyColors.gray800(), borderRadius: BorderRadius.circular(10)),
           child: Column(
             children: [
               /**
                  * Imagen del producto
                  */
               Image.network(
-                image,
-                width: 160,
+                itemModel.imageItem,
+                width: 110,
                 height: 140,
                 fit: BoxFit.contain,
               ),
@@ -154,8 +197,9 @@ class HomePage extends StatelessWidget {
                  * Texto del nombre del producto
                  */
               Text(
-                nombre,
-                style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 19),
+                itemModel.nameItem,
+                style:
+                    TextStyle(fontWeight: FontWeight.bold, fontSize: 19, color: MyColors.gray50()),
               ),
               Common.space(10),
               Row(
@@ -172,7 +216,7 @@ class HomePage extends StatelessWidget {
                     decoration:
                         BoxDecoration(color: Colors.amber, borderRadius: BorderRadius.circular(10)),
                     child: Text(
-                      uItem ? "1 Un" : "1 Kg",
+                      itemModel.uItem ? "1 Un" : "1 Kg",
                       style: const TextStyle(color: Colors.white, fontSize: 14),
                     ),
                   ),
@@ -183,13 +227,15 @@ class HomePage extends StatelessWidget {
                     "assets/dolar.png",
                     width: 15,
                     height: 15,
+                    color: MyColors.gray400(),
                   ),
                   /**
                      * Texto del precio
                      */
                   Text(
-                    precio.toString(),
-                    style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 19),
+                    itemModel.priceItem.toString(),
+                    style: TextStyle(
+                        fontWeight: FontWeight.bold, fontSize: 19, color: Color(0xFF9E9E9E)),
                   ),
                 ],
               )
@@ -238,8 +284,11 @@ class HomePage extends StatelessWidget {
                       scrollDirection: Axis.horizontal,
                       itemCount: snapshot.data!.isEmpty ? 0 : snapshot.data!.length,
                       itemBuilder: (context, index) {
-                        return itemCategoria(snapshot.data![index]["imageCategory"],
-                            snapshot.data![index]["nameCategory"]);
+                        return itemCategoria(
+                            snapshot.data![index]["imageCategory"],
+                            snapshot.data![index]["nameCategory"],
+                            index,
+                            precionado == index ? true : false);
                       },
                     ));
               }
@@ -256,22 +305,42 @@ class HomePage extends StatelessWidget {
     );
   }
 
-  Container itemCategoria(String image, String nombre) {
+  itemCategoria(String image, String nombre, int index, bool activo) {
     return Container(
       padding: const EdgeInsets.all(10),
       margin: const EdgeInsets.only(left: 20),
       width: 110,
       height: 40,
-      decoration: BoxDecoration(borderRadius: BorderRadius.circular(10), color: Colors.white),
-      child: Row(
-        children: [
-          Image.network(
-            image,
-            width: 30,
-            height: 30,
-          ),
-          Text(nombre)
-        ],
+      decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(10),
+          border: Border.all(width: 1, color: activo ? MyColors.gray500() : MyColors.gray700()),
+          color: activo ? MyColors.gray800() : MyColors.gray900()),
+      child: InkWell(
+        onTap: () {
+          setState(() {
+            numCategory = index + 1;
+            precionado = index;
+          });
+        },
+        onDoubleTap: () {
+          setState(() {
+            numCategory = 0;
+            precionado = 0;
+          });
+        },
+        child: Row(
+          children: [
+            Image.network(
+              image,
+              width: 30,
+              height: 30,
+            ),
+            Text(
+              nombre,
+              style: TextStyle(color: activo ? MyColors.gray50() : MyColors.gray500()),
+            )
+          ],
+        ),
       ),
     );
   }
@@ -279,7 +348,12 @@ class HomePage extends StatelessWidget {
   topContainer(BuildContext context, int id) {
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
-      children: [nombreUsuario(id), MyWidgets.botonCarrito(context)],
+      children: [
+        nombreUsuario(id),
+        MyWidgets.botonCarrito(context, () {
+          Navigator.pushNamed(context, '/Cart').then((_) => setState(() {}));
+        })
+      ],
     );
   }
 
@@ -295,8 +369,8 @@ class HomePage extends StatelessWidget {
                 padding: const EdgeInsets.only(top: 40, left: 20, bottom: 2),
                 child: Text(
                   "Hey ${snapshot.data}!",
-                  style: const TextStyle(
-                      fontSize: 30, fontWeight: FontWeight.bold, color: Colors.white),
+                  style: TextStyle(
+                      fontSize: 30, fontWeight: FontWeight.bold, color: MyColors.gray50()),
                 ),
               );
             } else if (snapshot.hasError) {

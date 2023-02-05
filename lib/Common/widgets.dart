@@ -1,27 +1,26 @@
+import 'package:app/Common/mycolors.dart';
+import 'package:app/Data/carrito.dart';
 import 'package:flutter/material.dart';
 
 class MyWidgets {
-  static botonRetroceder(BuildContext context, {double left = 20}) {
+  static botonRetroceder(BuildContext context, Function() function, {double left = 20}) {
     return Container(
         margin: EdgeInsets.only(left: left, top: 20, bottom: 10),
         width: 40,
         height: 40,
         decoration: BoxDecoration(
-          color: Colors.white,
+          color: MyColors.gray50(),
           borderRadius: BorderRadius.circular(10),
         ),
         child: IconButton(
-          icon: const Icon(
-            Icons.arrow_back_ios_new,
-            size: 20,
-          ),
-          onPressed: () {
-            Navigator.pop(context);
-          },
-        ));
+            icon: const Icon(
+              Icons.arrow_back_ios_new,
+              size: 20,
+            ),
+            onPressed: function));
   }
 
-  static botonSalir(BuildContext context) {
+  static botonSalir(BuildContext context, Function() function) {
     return Container(
         margin: const EdgeInsets.only(right: 20, top: 20, bottom: 10),
         width: 40,
@@ -31,17 +30,14 @@ class MyWidgets {
           borderRadius: BorderRadius.circular(10),
         ),
         child: IconButton(
-          icon: const Icon(
-            Icons.close,
-            size: 20,
-          ),
-          onPressed: () {
-            Navigator.popAndPushNamed(context, "/");
-          },
-        ));
+            icon: const Icon(
+              Icons.close,
+              size: 20,
+            ),
+            onPressed: function));
   }
 
-  static botonCarrito(BuildContext context) {
+  static botonCarrito(BuildContext context, Function() function) {
     return Padding(
       padding: const EdgeInsets.all(20),
       child: Stack(children: [
@@ -49,22 +45,20 @@ class MyWidgets {
            * Imagen carrito
            */
         IconButton(
-            onPressed: () {
-              Navigator.pushNamed(context, "/Cart");
-            },
-            icon: const Icon(
+            onPressed: function,
+            icon: Icon(
               Icons.storefront,
               size: 45,
-              color: Colors.white,
+              color: MyColors.gray600(),
             )),
         /**
            * Texto cantidad
            */
-        const Padding(
-          padding: EdgeInsets.only(top: 30, left: 26),
+        Padding(
+          padding: const EdgeInsets.only(top: 30, left: 26),
           child: Text(
-            "0",
-            style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14, color: Colors.white),
+            Carrito.data.length.toString(),
+            style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14, color: MyColors.gray600()),
           ),
         )
       ]),
@@ -84,8 +78,8 @@ class MyWidgets {
 
   static textBasePrecio(double precio) {
     return Text(
-      "\$ $precio" "0",
-      style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+      "\$ ${precio.toStringAsFixed(1)}" "0",
+      style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: MyColors.gray50()),
     );
   }
 

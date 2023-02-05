@@ -1,5 +1,8 @@
+import 'package:app/Common/common.dart';
 import 'package:app/Common/mycolors.dart';
 import 'package:app/Common/widgets.dart';
+import 'package:app/Data/carrito.dart';
+import 'package:app/Model/itemModel.dart';
 import 'package:flutter/material.dart';
 
 class CartPage extends StatefulWidget {
@@ -10,12 +13,10 @@ class CartPage extends StatefulWidget {
 }
 
 class _CartPageState extends State<CartPage> {
-  int cantidad = 0;
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: MyColors.white2(),
+      backgroundColor: MyColors.gray900(),
       body: SafeArea(
         child: Column(
           children: [containerTop(context), listaDeItems(context), containerBot()],
@@ -30,10 +31,10 @@ class _CartPageState extends State<CartPage> {
       padding: const EdgeInsets.only(left: 20, top: 40, right: 20, bottom: 20),
       margin: const EdgeInsets.only(top: 10),
       width: double.infinity,
-      decoration: const BoxDecoration(
-          color: Colors.white,
+      decoration: BoxDecoration(
+          color: MyColors.gray800(),
           borderRadius:
-              BorderRadius.only(topLeft: Radius.circular(40), topRight: Radius.circular(40))),
+              const BorderRadius.only(topLeft: Radius.circular(40), topRight: Radius.circular(40))),
       child: Column(
         mainAxisAlignment: MainAxisAlignment.spaceAround,
         children: [productosCantidad(), precioyBotton()],
@@ -44,16 +45,16 @@ class _CartPageState extends State<CartPage> {
   Row productosCantidad() {
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
-      children: const [
+      children: [
         Text(
           "Productos:",
-          style: TextStyle(fontSize: 20, color: Colors.grey),
+          style: TextStyle(fontSize: 20, color: MyColors.gray50()),
         ),
         Padding(
-          padding: EdgeInsets.only(right: 20),
+          padding: const EdgeInsets.only(right: 20),
           child: Text(
-            "4",
-            style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+            Carrito.data.length.toString(),
+            style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: MyColors.gray50()),
           ),
         ),
       ],
@@ -64,11 +65,11 @@ class _CartPageState extends State<CartPage> {
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
-        const Text(
+        Text(
           "Total: ",
-          style: TextStyle(fontSize: 20),
+          style: TextStyle(fontSize: 20, color: MyColors.gray50()),
         ),
-        MyWidgets.textBasePrecio(5.60),
+        MyWidgets.textBasePrecio(Carrito.getPriceFinal(Carrito.data)),
         MyWidgets.botonBase(() => null, "Ir a Pagar"),
       ],
     );
@@ -78,52 +79,56 @@ class _CartPageState extends State<CartPage> {
     return SizedBox(
       width: double.infinity,
       height: MediaQuery.of(context).size.height * 0.60,
-      child: ListView(children: [itemBase(), itemBase(), itemBase(), itemBase(), itemBase()]),
-    );
-  }
-
-  Card itemBase() {
-    return Card(
-      margin: const EdgeInsets.all(20),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-        children: [imagenPrincipal(), informacionYPrecio()],
+      child: ListView.builder(
+        itemCount: Carrito.getCantForItems(Carrito.data),
+        itemBuilder: (context, index) {
+          return itemBase(Carrito.data[index]);
+        },
       ),
     );
   }
 
-  SizedBox informacionYPrecio() {
+  itemBase(ItemModel itemModel) {
+    return Card(
+      margin: const EdgeInsets.all(20),
+      color: MyColors.gray800(),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+        children: [imagenPrincipal(itemModel.imageItem), informacionYPrecio(itemModel)],
+      ),
+    );
+  }
+
+  SizedBox informacionYPrecio(ItemModel itemModel) {
     return SizedBox(
       height: 100,
       width: 200,
       child: Column(
         mainAxisAlignment: MainAxisAlignment.spaceAround,
         children: [
-          const Text(
-            "Naranja fresca",
-            style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+          Text(
+            itemModel.nameItem,
+            style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: MyColors.gray50()),
           ),
-          const Text(
-            "\$ 4.60 /  KG",
-            style: TextStyle(fontSize: 17, fontWeight: FontWeight.bold),
+          Text(
+            "\$ ${itemModel.priceItem} /  KG",
+            style: TextStyle(fontSize: 17, fontWeight: FontWeight.bold, color: MyColors.gray400()),
           ),
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceEvenly,
             children: [
               botonAumentarDisminuir(() {
                 setState(() {
-                  if (cantidad != 0) {
-                    cantidad--;
-                  }
+                  Carrito.data.removeAt(Carrito.getIndexItemForId(Carrito.data, itemModel.id));
                 });
               }, Icons.remove),
               Text(
-                cantidad.toString(),
-                style: const TextStyle(color: Colors.lightBlue, fontSize: 18),
+                Carrito.getItemCant(Carrito.data, itemModel.id).toString(),
+                style: TextStyle(color: MyColors.gray50(), fontSize: 18),
               ),
               botonAumentarDisminuir(() {
                 setState(() {
-                  cantidad++;
+                  Carrito.data.add(itemModel);
                 });
               }, Icons.add)
             ],
@@ -133,9 +138,9 @@ class _CartPageState extends State<CartPage> {
     );
   }
 
-  Image imagenPrincipal() {
+  Image imagenPrincipal(String imagen) {
     return Image.network(
-      "https://idard.org.do/wp-content/uploads/2018/03/naranja1.png",
+      imagen,
       width: 100,
       height: 120,
     );
@@ -163,7 +168,13 @@ class _CartPageState extends State<CartPage> {
   Row containerTop(BuildContext context) {
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
-      children: [MyWidgets.botonRetroceder(context), MyWidgets.botonSalir(context)],
+      children: [
+        MyWidgets.botonRetroceder(context, () {
+          setState(() {
+            Navigator.pop(context);
+          });
+        }),
+      ],
     );
   }
 }
